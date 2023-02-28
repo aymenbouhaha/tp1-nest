@@ -3,7 +3,10 @@ import {TodoService} from "./todo.service";
 import {AddTodoDto} from "./dto/add-todo.dto";
 import {UpdateTodoDto} from "./dto/update-todo.dto";
 
-@Controller('todo')
+@Controller({
+    path: 'todo',
+    version: '1'
+})
 export class TodoController {
 
     constructor(
