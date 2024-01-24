@@ -6,6 +6,7 @@ import {InjectRepository} from "@nestjs/typeorm";
 import {TodoEntity} from "./entity/todo.entity";
 import {Like, Repository} from "typeorm";
 import {SearchDto} from "./dto/search.dto";
+import {User} from "../user/entities/user.entity";
 
 
 @Injectable()
@@ -19,7 +20,7 @@ export class TodoDbService {
 
 
 
-    getTodos(searchCriteria? : SearchDto){
+    getTodos( user : User,searchCriteria? : SearchDto){
         const findOptions=[]
         if (searchCriteria)
             if (searchCriteria.critere)
@@ -39,13 +40,16 @@ export class TodoDbService {
         if (findOptions.length){
             return this.todoRepostiory.findBy(findOptions)
         }
-        return this.todoRepostiory.find()
+        return this.todoRepostiory.find({where : {user : user}})
     }
 
-    addTodo(todoToAdd : AddTodoDto){
-        const newTodo = this.todoRepostiory.create(todoToAdd)
+    addTodo(user : User,todoToAdd : AddTodoDto){
+        const newTodo = this.todoRepostiory.create({
+            ...todoToAdd,
+            user : user
+        })
         try {
-            return this.todoRepostiory.save(todoToAdd)
+            return this.todoRepostiory.save(newTodo)
         }
         catch (e) {
             throw new ConflictException("Une erreur lors de l'ajout du todo")
@@ -72,10 +76,15 @@ export class TodoDbService {
         return this.todoRepostiory.restore(id)
     }
 
-    async countForStatus() {
-        const countForWaiting = await this.todoRepostiory.count({where: {statut: TodoStatus.waiting}})
-        const countForDone =await this.todoRepostiory.count({where: {statut: TodoStatus.done}})
-        const countForActif =await this.todoRepostiory.count({where: {statut: TodoStatus.actif}})
+    async countForStatus(user : User) {
+        const countForWaiting = await this.todoRepostiory.count({where: {
+            statut: TodoStatus.waiting,
+                user : user
+        }})
+        const countForDone =await this.todoRepostiory.count({where: {statut: TodoStatus.done,
+                user : user}})
+        const countForActif =await this.todoRepostiory.count({where: {statut: TodoStatus.actif,
+                user : user}})
         const counts = {
             "En Cours": countForActif,
             "En attente": countForWaiting,

@@ -27,11 +27,6 @@ export class Cv {
     @Column()
     path : string
 
-    @ManyToOne(
-        ()=>User,
-        (user)=>user.cvs
-    )
-    user : User
 
     @ManyToMany(
         ()=>Skill,

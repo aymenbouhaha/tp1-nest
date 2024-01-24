@@ -1,13 +1,16 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards} from '@nestjs/common';
 import {AddTodoDto} from "./dto/add-todo.dto";
 import {UpdateTodoDto} from "./dto/update-todo.dto";
 import {TodoDbService} from "./todo-db.service";
 import {SearchDto} from "./dto/search.dto";
+import {User} from "../decorator/user.decorator";
+import {JwtAuthGuard} from "../user/guards/jwt-auth.guard";
 
 @Controller({
     path: 'todo',
     version : '2'
 })
+@UseGuards(JwtAuthGuard)
 export class TodoDbController {
 
     constructor(
@@ -17,14 +20,14 @@ export class TodoDbController {
 
 
     @Get()
-    getTodos(@Query() searchCriteria : SearchDto){
+    getTodos(@Query() searchCriteria : SearchDto,@User() user){
         console.log(searchCriteria)
-        return this.todoService.getTodos(searchCriteria)
+        return this.todoService.getTodos(user,searchCriteria)
     }
 
     @Get("count-for-status")
-    countForStatus(){
-        return this.todoService.countForStatus()
+    countForStatus(@User() user){
+        return this.todoService.countForStatus(user)
     }
 
 
@@ -34,8 +37,8 @@ export class TodoDbController {
     }
 
     @Post("add")
-    addTodo(@Body() todoToAdd : AddTodoDto){
-        return this.todoService.addTodo(todoToAdd)
+    addTodo(@Body() todoToAdd : AddTodoDto,@User() user){
+        return this.todoService.addTodo(user,todoToAdd)
     }
 
     @Delete("delete/:id")

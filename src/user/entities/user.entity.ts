@@ -1,13 +1,13 @@
+import { TodoEntity } from "src/todo/entity/todo.entity";
 import {Column, Entity, OneToMany, PrimaryGeneratedColumn} from "typeorm";
-import {Cv} from "../../cv/entities/cv.entity";
+
 
 @Entity("user")
 export class User {
+
     @PrimaryGeneratedColumn()
     id : number
 
-    @Column()
-    username : string
 
     @Column()
     email : string
@@ -15,9 +15,15 @@ export class User {
     @Column()
     password : string
 
+    @Column()
+    salt : string
+
     @OneToMany(
-        ()=>Cv,
-        (cv)=> cv.user
+        ()=>TodoEntity,
+        (todo)=> todo.user
     )
-    cvs : Cv[]
+    todos : TodoEntity[]
+
+
 }
+

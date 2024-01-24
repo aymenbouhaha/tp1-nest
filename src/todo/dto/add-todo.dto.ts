@@ -6,13 +6,11 @@ export class AddTodoDto{
     @MinLength(10,{
         message : nameErrorMessage
     })
-
     name : string
 
     @Length(3,10,{
         message : descriptionErrorMessage
     })
-
     description : string
 
 }

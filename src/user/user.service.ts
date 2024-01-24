@@ -1,42 +1,84 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import {BadRequestException, ConflictException, Injectable, NotFoundException} from '@nestjs/common';
+import {SignUpDto} from "./dto/sign-up.dto";
+import * as bcrypt from 'bcrypt';
+import {LoginDto} from "./dto/login.dto";
+import {JwtService} from "@nestjs/jwt";
 import {InjectRepository} from "@nestjs/typeorm";
-import {Cv} from "../cv/entities/cv.entity";
-import {Repository} from "typeorm";
 import {User} from "./entities/user.entity";
+import {Repository} from "typeorm";
+
 
 @Injectable()
 export class UserService {
 
-  constructor(
-      @InjectRepository(User)
-      private userRepo : Repository<User>
-  ) {
-  }
+    constructor(
+        @InjectRepository(User)
+        private userRepository: Repository<User>,
+        private jwtService : JwtService,
+    ) {
+    }
 
-  async addUser(user: User) {
-    return await this.userRepo.save(user)
-  }
 
-  async create(createUserDto: CreateUserDto) {
-    const user = this.userRepo.create(createUserDto)
-    return await this.userRepo.save(user)
-  }
+    // async signUp(signUpDto : SignUpDto){
+    //     const salt = await bcrypt.genSalt();
+    //     const password = await bcrypt.hash(signUpDto.password,salt)
+    //     const user=new this.userModel({
+    //         ...signUpDto,
+    //         password : password,
+    //         salt : salt,
+    //     })
+    //     try {
+    //         return await user.save()
+    //     }catch (e) {
+    //         throw e
+    //     }
+    // }
 
-  async findAll() {
-    return await this.userRepo.find()
-  }
+    async signUp(userData : SignUpDto){
+        const user=this.userRepository.create(
+            {
+                ...userData
+            }
+        )
+        user.salt= await bcrypt.genSalt();
+        user.password = await bcrypt.hash(user.password,user.salt)
+        try {
+            await this.userRepository.save(user)
+        }catch (e){
+            throw new ConflictException("Une erreur est survenue veuillez réessayer")
+        }
+        return {
+            id : user.id,
+            email : user.email,
+        }
 
-  async findOne(id: number) {
-    return await this.userRepo.findOneBy({id: id})
-  }
+    }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    return await this.userRepo.update(id, updateUserDto);
-  }
+    async login(credentials : LoginDto){
+        const {email, password} = credentials;
+        const user = await this.userRepository.findOne({where : {email : email} })
+        if (!user) {
+            throw new NotFoundException(`l'email ou le mot de passe sont incorrecte`)
+        }
+        const hashedPassword = await bcrypt.hash(password, user.salt)
+        if (hashedPassword == user.password) {
+            const payload = {
+                id : user.id,
+                email: user.email,
+            }
+            const token = this.jwtService.sign(payload)
 
-  async remove(id: number) {
-    return await this.userRepo.delete(id);
-  }
+            return {
+                ...payload,
+                token: token,
+            };
+        } else {
+            throw new NotFoundException(`l'email ou le mot de passe sont incorrecte`);
+        }
+    }
+
+
+    async findUserByMail(email: string) {
+        return this.userRepository.findOne({where : {email : email} })
+    }
 }

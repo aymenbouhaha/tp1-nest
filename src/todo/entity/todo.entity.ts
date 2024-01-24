@@ -23,5 +23,10 @@ export class TodoEntity extends Special{
     statut : string
 
 
+    @ManyToOne(
+        ()=>User,
+        (user)=>user.todos
+    )
+    user : User
 
 }
