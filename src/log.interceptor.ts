@@ -6,7 +6,7 @@ import {Request} from "express";
 export class RequestLoggingInterceptor implements NestInterceptor {
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const request : Request = context.switchToHttp().getRequest();
-        console.log('Request body:', request.originalUrl);
+        console.log('Request body:', request.body);
         console.log("Hedears:" ,request.headers)
         return next.handle();
     }
